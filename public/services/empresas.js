@@ -1,113 +1,134 @@
 import { db } from '../firebase.js';
 import {
-  collection, doc, setDoc, getDocs, deleteDoc
+  collection, doc, setDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { state } from '../core/state.js';
 import { toast } from '../helpers.js';
-import { seleccionarEmpresa } from '../app.js';
 
-export let empresas = [];
-export let empresaActual = null;
-
-// ── CARGAR EMPRESAS ───────────────────────────────────────────
 export async function cargarEmpresas() {
   const snap = await getDocs(collection(db, 'empresas'));
-  empresas = [];
-  snap.forEach(d => empresas.push({ id: d.id, ...d.data() }));
+  state.empresas = [];
+  snap.forEach(d => state.empresas.push({ id: d.id, ...d.data() }));
 
-  if (empresas.length === 0) {
+  if (state.empresas.length === 0) {
     await crearEmpresaDefault();
   }
-
-  renderEmpresasList();
-  if (empresas.length > 0) seleccionarEmpresa(empresas[0].id);
 }
 
-// ── EMPRESA DEFAULT (primera vez) ────────────────────────────
 async function crearEmpresaDefault() {
-  const ref = doc(collection(db, 'empresas'));
+  const ref     = doc(collection(db, 'empresas'));
   const empresa = {
-    nombre: 'Mi Empresa',
-    color: '#2d7a4f',
+    nombre:  'Mi Empresa',
+    color:   '#2d7a4f',
     cuentas: {
-      'GASTOS':   ['BEBIDAS', 'ALIMENTOS', 'SERVICIOS', 'OTROS'],
-      'INGRESOS': ['VENTAS', 'OTROS INGRESOS'],
-      'NOMINA':   ['SALARIOS', 'PRESTACIONES'],
+      'GASTOS': {
+        'BEBIDAS':   ['LICORES', 'CERVEZAS', 'GASEOSAS'],
+        'ALIMENTOS': ['CARNES', 'VERDURAS', 'VARIOS'],
+        'OTROS':     ['HIELO', 'CIGARRILLOS', 'ASEO'],
+      },
+      'INGRESOS': {
+        'VENTAS':         ['LICORES', 'ALIMENTOS'],
+        'OTROS INGRESOS': ['VARIOS'],
+      },
+      'NOMINA': {
+        'SALARIOS':    ['FIJO', 'VARIABLE'],
+        'PRESTACIONES':['CESANTIAS', 'VACACIONES'],
+      },
     },
     metodos: ['CAJA', 'BANCOLOMBIA', 'NEQUI', 'DAVIPLATA', 'TRANSFERENCIA']
   };
   await setDoc(ref, empresa);
-  empresas.push({ id: ref.id, ...empresa });
+  state.empresas.push({ id: ref.id, ...empresa });
 }
 
-// ── CREAR EMPRESA ─────────────────────────────────────────────
 export async function crearEmpresa() {
   const nombre = prompt('Nombre de la nueva empresa:');
   if (!nombre) return;
   const colores = ['#2d7a4f', '#1a5fa8', '#a8601a'];
-  const ref = doc(collection(db, 'empresas'));
+  const ref     = doc(collection(db, 'empresas'));
   const empresa = {
-    nombre: nombre.trim(),
-    color: colores[empresas.length % 3],
+    nombre:  nombre.trim(),
+    color:   colores[state.empresas.length % 3],
     cuentas: { 'GASTOS': ['OTROS'], 'INGRESOS': ['VENTAS'] },
     metodos: ['CAJA', 'BANCOLOMBIA', 'NEQUI']
   };
   await setDoc(ref, empresa);
-  empresas.push({ id: ref.id, ...empresa });
-  renderEmpresasList();
-  seleccionarEmpresa(ref.id);
+  state.empresas.push({ id: ref.id, ...empresa });
   toast('Empresa creada ✓');
 }
 
-// ── RENDER LISTA SIDEBAR ──────────────────────────────────────
-export function renderEmpresasList() {
-  const ul = document.getElementById('empresas-list');
-  ul.innerHTML = '';
-  empresas.forEach(emp => {
-    const btn = document.createElement('button');
-    btn.className = 'empresa-btn';
-    btn.dataset.id = emp.id;
-    btn.innerHTML = `
-      <span class="empresa-dot" style="background:${emp.color}"></span>
-      ${emp.nombre}
-    `;
-    btn.onclick = () => seleccionarEmpresa(emp.id);
-    ul.appendChild(btn);
-  });
+export async function guardarCuentas() {
+  await setDoc(
+    doc(db, 'empresas', state.empresaId),
+    { cuentas: state.cuentas },
+    { merge: true }
+  );
 }
 
-// ── CATÁLOGO DE CUENTAS ───────────────────────────────────────
-export async function agregarCuenta(empresaId, cuentas) {
+export async function agregarCuenta() {
   const nombre = prompt('Nombre de la cuenta (ej: GASTOS):');
-  if (!nombre) return cuentas;
+  if (!nombre) return;
   const key = nombre.trim().toUpperCase();
-  cuentas[key] = cuentas[key] || [];
-  await guardarCuentas(empresaId, cuentas);
+  state.cuentas[key] = state.cuentas[key] || [];
+  await guardarCuentas();
   toast('Cuenta creada ✓');
-  return cuentas;
 }
 
-export async function eliminarCuenta(empresaId, cuentas, cuenta) {
-  if (!confirm(`¿Eliminar la cuenta ${cuenta}?`)) return cuentas;
-  delete cuentas[cuenta];
-  await guardarCuentas(empresaId, cuentas);
-  return cuentas;
+export async function eliminarCuenta(cuenta) {
+  if (!confirm(`¿Eliminar la cuenta ${cuenta}?`)) return;
+  delete state.cuentas[cuenta];
+  await guardarCuentas();
 }
 
-export async function agregarSubcuenta(empresaId, cuentas, cuenta) {
+export async function agregarSubcuenta(cuenta) {
   const nombre = prompt(`Nueva subcuenta para ${cuenta}:`);
-  if (!nombre) return cuentas;
-  cuentas[cuenta].push(nombre.trim().toUpperCase());
-  await guardarCuentas(empresaId, cuentas);
+  if (!nombre) return;
+  state.cuentas[cuenta].push(nombre.trim().toUpperCase());
+  await guardarCuentas();
   toast('Subcuenta agregada ✓');
-  return cuentas;
 }
 
-export async function eliminarSubcuenta(empresaId, cuentas, cuenta, sub) {
-  cuentas[cuenta] = cuentas[cuenta].filter(s => s !== sub);
-  await guardarCuentas(empresaId, cuentas);
-  return cuentas;
+export async function eliminarSubcuenta(cuenta, sub) {
+  state.cuentas[cuenta] = state.cuentas[cuenta].filter(s => s !== sub);
+  await guardarCuentas();
 }
 
-async function guardarCuentas(empresaId, cuentas) {
-  await setDoc(doc(db, 'empresas', empresaId), { cuentas }, { merge: true });
+export async function agregarAuxiliar(cuenta, subcuenta) {
+  const nombre = prompt(`Nueva auxiliar para ${cuenta} › ${subcuenta}:`);
+  if (!nombre) return;
+  if (!state.cuentas[cuenta][subcuenta]) {
+    state.cuentas[cuenta][subcuenta] = [];
+  }
+  state.cuentas[cuenta][subcuenta].push(nombre.trim().toUpperCase());
+  await guardarCuentas();
+  toast('Auxiliar agregada ✓');
+}
+
+export async function eliminarAuxiliar(cuenta, subcuenta, aux) {
+  state.cuentas[cuenta][subcuenta] =
+    state.cuentas[cuenta][subcuenta].filter(a => a !== aux);
+  await guardarCuentas();
+}
+
+export async function migrarCuentasLegacy() {
+  let cambios = false;
+  Object.keys(state.cuentas).forEach(cuenta => {
+    const subcuentas = state.cuentas[cuenta];
+    if (Array.isArray(subcuentas)) {
+      // Formato viejo: ['BEBIDAS', 'OTROS'] → nuevo: {BEBIDAS:[], OTROS:[]}
+      const nuevo = {};
+      subcuentas.forEach(s => { nuevo[s] = []; });
+      state.cuentas[cuenta] = nuevo;
+      cambios = true;
+    } else {
+      // Ya es objeto, revisar si sus valores son arrays (correcto)
+      Object.keys(subcuentas).forEach(sub => {
+        if (!Array.isArray(subcuentas[sub])) {
+          subcuentas[sub] = [];
+          cambios = true;
+        }
+      });
+    }
+  });
+  if (cambios) await guardarCuentas();
 }

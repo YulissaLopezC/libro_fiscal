@@ -1,0 +1,61 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Resumen <span>bimestral</span></div>
+    <div class="page-subtitle empresa-nombre">—</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="btn-exportar">↓ Exportar CSV</button>
+  </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stat-card verde">
+    <div class="stat-label">Total entradas</div>
+    <div class="stat-value" id="resumen-entradas">$0</div>
+  </div>
+  <div class="stat-card rojo">
+    <div class="stat-label">Total salidas</div>
+    <div class="stat-value" id="resumen-salidas">$0</div>
+  </div>
+  <div class="stat-card azul">
+    <div class="stat-label">Balance</div>
+    <div class="stat-value" id="resumen-balance">$0</div>
+  </div>
+</div>
+
+<div class="resumen-grid">
+  <div class="resumen-card">
+    <div class="resumen-card-title">Gastos por categoría</div>
+    <div id="tbody-resumen-cuentas"></div>
+  </div>
+  <div class="resumen-card">
+    <div class="resumen-card-title">Por método de pago</div>
+    <div id="tbody-resumen-metodos"></div>
+  </div>
+</div>
+
+<div class="resumen-card">
+  <div class="resumen-card-title"
+    style="padding:20px 22px 0;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.8px;
+    font-family:'DM Mono',monospace">
+    Base para impuestos bimestrales
+  </div>
+  <div class="impuesto-grid">
+    <div class="imp-item">
+      <div class="imp-label">Base ICA / Ret. Fuente</div>
+      <div class="imp-value" id="base-ica">$0</div>
+      <div class="imp-sub">Total salidas del período</div>
+    </div>
+    <div class="imp-item">
+      <div class="imp-label">IVA descontable</div>
+      <div class="imp-value" style="color:var(--azul)">—</div>
+      <div class="imp-sub">Configurable por cuenta</div>
+    </div>
+    <div class="imp-item">
+      <div class="imp-label">Retención practicada</div>
+      <div class="imp-value" style="color:var(--amarillo)">—</div>
+      <div class="imp-sub">Configurable por proveedor</div>
+    </div>
+  </div>
+</div>

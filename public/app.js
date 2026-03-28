@@ -1,181 +1,82 @@
-import { cargarEmpresas, crearEmpresa, empresas,
-  agregarCuenta, eliminarCuenta,
-  agregarSubcuenta, eliminarSubcuenta,
-  renderEmpresasList } from './services/empresas.js';
+import { iniciarAuthObserver, logoutHandler,
+  loginHandler } from './services/auth.js';
+import { cargarEmpresas, migrarCuentasLegacy } from './services/empresas.js';
+import { suscribirMovimientos } from './services/movimientos.js';
+import { cargarVistas } from './core/viewsloader.js';
+import { navigate } from './core/router.js';
+import { state } from './core/state.js';
+import { renderSidebar, renderEmpresasList,
+  actualizarNombreEmpresa } from './components/sidebar.js';
+import { renderDashboard } from './components/dashboard.js';
+import { renderMovimientos } from './components/movimientos.js';
+import { renderResumen } from './components/resumen.js';
+import { iniciarDigitacion, poblarSelectCuentas,
+  poblarSelectMetodos } from './components/digitacion.js';
+import { exportarCSV } from './helpers.js';
+import { cargarProveedores } from './services/proveedores.js';
+import { renderCatalogo, iniciarCatalogo } from './components/catalogo.js';
+// ── ARRANQUE ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarAuthObserver();
+});
 
-import { suscribirMovimientos, guardarMovimiento,
-  eliminarMovimiento, limpiarFormulario } from './movimientos.js';
-
-import { poblarSelectCuentas, poblarSelectMetodos,
-  actualizarSubcuentas, renderCatalogo,
-  showView } from './ui.js';
-
-import { formatValor, exportarCSV, fechaHoy } from './helpers.js';
-
-import { logoutHandler } from './auth.js';
-import { cargarVista } from './core/viewsLoader.js'; // 🔥 NUEVO
-
-// ── ESTADO ───────────────────────────────────────────────────
-let empresaId  = null;
-let cuentas    = {};
-let metodos    = [];
-
-// ── INICIAR APP ──────────────────────────────────────────────
 export async function iniciarApp() {
+  await cargarVistas();
   await cargarEmpresas();
-  registrarEventos();
+  renderSidebar();
+  iniciarDigitacion();
+  iniciarCatalogo();
+  registrarEventosGlobales();
+
+  if (state.empresas.length > 0) {
+    await seleccionarEmpresa(state.empresas[0].id);
+  }
 }
 
-// ── SELECCIONAR EMPRESA ──────────────────────────────────────
+// ── SELECCIONAR EMPRESA ───────────────────────────────────────
 export async function seleccionarEmpresa(id) {
-  empresaId = id;
+  const emp = state.empresas.find(e => e.id === id);
+  if (!emp) return;
 
-  const emp = empresas.find(e => e.id === id);
-  cuentas   = emp.cuentas || {};
-  metodos   = emp.metodos || [];
-
-  // Sidebar activo
+  state.setEmpresa(id, emp);
+  await migrarCuentasLegacy(); 
+  // UI
   document.querySelectorAll('.empresa-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.id === id)
-  );
-
-  // Nombre en UI
-  document.querySelectorAll('.empresa-nombre')
-    .forEach(el => el.textContent = emp.nombre);
-
-  // Selects
-  poblarSelectCuentas(cuentas);
-  poblarSelectMetodos(metodos);
-
-  // Suscripción datos
-  suscribirMovimientos(id);
-}
-
-// ── EVENTOS ──────────────────────────────────────────────────
-function registrarEventos() {
-
-  // Enter login
-  document.getElementById('login-pass')
-    ?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') window.APP.login();
-    });
-
-  // Fecha default
-  const fecha = document.getElementById('campo-fecha');
-  if (fecha) fecha.value = fechaHoy();
-
-  // Tipo movimiento
-  document.getElementById('tipo-salida')
-    ?.addEventListener('click', () => setTipo('SALIDA'));
-
-  document.getElementById('tipo-entrada')
-    ?.addEventListener('click', () => setTipo('ENTRADA'));
-
-  // Formato valor
-  document.getElementById('campo-valor')
-    ?.addEventListener('input', e => formatValor(e.target));
-
-  // Subcuentas dinámicas
-  document.getElementById('campo-cuenta')
-    ?.addEventListener('change', () => actualizarSubcuentas(cuentas));
-
-  // Filtros
-  ['filtro-tipo', 'filtro-metodo', 'filtro-cuenta'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', () => {
-      import('./movimientos.js').then(m =>
-        import('./ui.js').then(ui =>
-          ui.renderMovimientos(m.movimientos)
-        )
-      );
-    });
+    b.classList.toggle('active', b.dataset.id === id));
+  actualizarNombreEmpresa();
+  poblarSelectCuentas();
+  poblarSelectMetodos();
+  await cargarProveedores();
+  // Datos en tiempo real
+  suscribirMovimientos(() => {
+    renderDashboard();
+    renderMovimientos();
+    renderResumen();
   });
 }
 
-// ── TIPO ─────────────────────────────────────────────────────
-function setTipo(tipo) {
-  document.getElementById('campo-tipo').value = tipo;
-
-  document.getElementById('tipo-salida')
-    ?.classList.toggle('active', tipo === 'SALIDA');
-
-  document.getElementById('tipo-entrada')
-    ?.classList.toggle('active', tipo === 'ENTRADA');
-}
-
-// ── CATÁLOGO ────────────────────────────────────────────────
-async function _agregarCuenta() {
-  cuentas = await agregarCuenta(empresaId, cuentas);
-  poblarSelectCuentas(cuentas);
-  renderCatalogo(cuentas);
-}
-
-async function _eliminarCuenta(cuenta) {
-  cuentas = await eliminarCuenta(empresaId, cuentas, cuenta);
-  poblarSelectCuentas(cuentas);
-  renderCatalogo(cuentas);
-}
-
-async function _agregarSub(cuenta) {
-  cuentas = await agregarSubcuenta(empresaId, cuentas, cuenta);
-  poblarSelectCuentas(cuentas);
-  renderCatalogo(cuentas);
-}
-
-async function _eliminarSub(cuenta, sub) {
-  cuentas = await eliminarSubcuenta(empresaId, cuentas, cuenta, sub);
-  poblarSelectCuentas(cuentas);
-  renderCatalogo(cuentas);
-}
-
-// ── API GLOBAL ───────────────────────────────────────────────
-window.APP = {
-
-  login: () =>
-    import('./auth.js').then(a => a.loginHandler()),
-
-  logout: () => logoutHandler(),
-
-  crearEmpresa: () => crearEmpresa(),
-
-  guardar: () => guardarMovimiento(empresaId),
-
-  eliminar: (id) => eliminarMovimiento(empresaId, id),
-
-  limpiar: () => limpiarFormulario(),
-
-  // 🔥 CAMBIO IMPORTANTE
-  mostrar: async (id) => {
-    await cargarVista(id, 'app-content'); // carga HTML dinámico
-    showView(id); // mantiene tu lógica actual
-    registrarEventos(); // vuelve a bindear eventos
-  },
-
-  agregarCuenta: () => _agregarCuenta(),
-
-  eliminarCuenta: (c) => _eliminarCuenta(c),
-
-  agregarSub: (c) => _agregarSub(c),
-
-  eliminarSub: (c, s) => _eliminarSub(c, s),
-
-  exportar: () => {
-    import('./movimientos.js').then(m => {
-      const emp = empresas.find(e => e.id === empresaId);
-      exportarCSV(m.movimientos, emp?.nombre || 'empresa');
+// ── EVENTOS GLOBALES ──────────────────────────────────────────
+function registrarEventosGlobales() {
+  // Enter en login
+  document.getElementById('login-pass')
+    ?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') loginHandler();
     });
-  },
 
-  filtrar: () => {
-    import('./movimientos.js').then(m =>
-      import('./ui.js').then(ui =>
-        ui.renderMovimientos(m.movimientos)
-      )
-    );
-  },
+  // Exportar
+  document.getElementById('btn-exportar')
+    ?.addEventListener('click', () => {
+      const emp = state.getEmpresa();
+      exportarCSV(state.movimientos, emp?.nombre || 'empresa');
+    });
+}
 
-  catalogoVista: async () => {
-    await cargarVista('catalogo', 'app-content');
-    showView('catalogo');
-    renderCatalogo(cuentas);
-  }
+
+
+// ── API GLOBAL (para onclick en HTML) ────────────────────────
+window.APP = {
+  login:            () => loginHandler(),
+  logout:           () => logoutHandler(),
+  seleccionarEmpresa,
+  navegar:          (id) => navigate(id),
 };

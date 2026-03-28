@@ -1,0 +1,42 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Libro de <span>movimientos</span></div>
+    <div class="page-subtitle empresa-nombre">—</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="btn-exportar">↓ Exportar CSV</button>
+  </div>
+</div>
+
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">Todos los registros</div>
+    <div class="filtros">
+      <select id="filtro-tipo">
+        <option value="">Todos los tipos</option>
+        <option value="SALIDA">Salidas</option>
+        <option value="ENTRADA">Entradas</option>
+      </select>
+      <select id="filtro-metodo">
+        <option value="">Todos los métodos</option>
+      </select>
+      <select id="filtro-cuenta">
+        <option value="">Todas las cuentas</option>
+      </select>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Fecha</th><th>Cuenta · Subcuenta</th>
+        <th>Proveedor</th><th>Recibo</th><th>Método</th>
+        <th>Tipo</th><th>Valor</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody-movimientos">
+      <tr><td colspan="9"
+        style="text-align:center;padding:28px;color:var(--muted)">
+        Sin movimientos</td></tr>
+    </tbody>
+  </table>
+</div>

@@ -1,16 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>LibroFiscal</title>
-  <link rel="stylesheet" href="styles/main.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LibroFiscal</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/main.css">
+<script type="module" src="app.js"></script>
 </head>
-
 <body>
 
-<div id="app"></div>
+<!-- ── LOGIN ── -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">LibroFiscal</div>
+    <div class="login-sub">gestión contable · multi-empresa</div>
+    <label class="login-label">Correo electrónico</label>
+    <input id="login-email" type="email" class="login-input"
+      placeholder="tu@correo.com">
+    <label class="login-label">Contraseña</label>
+    <input id="login-pass" type="password" class="login-input"
+      placeholder="••••••••">
+    <button id="login-btn" class="login-btn" onclick="APP.login()">
+      Entrar
+    </button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
 
-<script type="module" src="app.js"></script>
+<!-- ── APP ── -->
+<div id="screen-app">
+
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-text">LibroFiscal</div>
+      <div class="logo-sub">gestión contable</div>
+    </div>
+
+    <div class="empresa-section">
+      <div class="section-label">Empresa activa</div>
+      <div id="empresas-list"></div>
+    </div>
+
+    <nav>
+      <div class="section-label"
+        style="padding:0 4px;margin-bottom:8px">Menú</div>
+      <button class="nav-item active" data-view="dashboard"
+        onclick="APP.navegar('dashboard')">
+        <span class="icon">▦</span> Dashboard
+      </button>
+      <button class="nav-item" data-view="digitacion"
+        onclick="APP.navegar('digitacion')">
+        <span class="icon">＋</span> Nuevo movimiento
+      </button>
+      <button class="nav-item" data-view="movimientos"
+        onclick="APP.navegar('movimientos')">
+        <span class="icon">≡</span> Movimientos
+      </button>
+      <button class="nav-item" data-view="resumen"
+        onclick="APP.navegar('resumen')">
+        <span class="icon">◉</span> Resumen bimestral
+      </button>
+      <button class="nav-item" data-view="catalogo"
+        onclick="APP.navegar('catalogo')">
+        <span class="icon">✎</span> Catálogo de cuentas
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span id="user-email"></span>
+      <button class="logout-btn" onclick="APP.logout()">Salir</button>
+    </div>
+  </aside>
+
+  <!-- Aquí se inyectan las vistas dinámicamente -->
+  <main class="main">
+    <div id="app-views"></div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
 
 </body>
 </html>

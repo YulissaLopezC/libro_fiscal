@@ -1,0 +1,103 @@
+<div class="topbar">
+  <div>
+    <div class="page-title">Nuevo <span>movimiento</span></div>
+    <div class="page-subtitle empresa-nombre">—</div>
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-card-title">Datos del movimiento</div>
+  <div class="form-grid">
+
+    <div class="form-group">
+      <label class="form-label">Fecha</label>
+      <input type="date" class="form-input" id="campo-fecha">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo de movimiento</label>
+      <div class="tipo-toggle">
+        <button id="tipo-salida" class="tipo-btn active">↓ Salida</button>
+        <button id="tipo-entrada" class="tipo-btn">↑ Entrada</button>
+      </div>
+      <input type="hidden" id="campo-tipo" value="SALIDA">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Cuenta</label>
+      <select class="form-select" id="campo-cuenta">
+        <option value="">Seleccionar...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Subcuenta</label>
+      <select class="form-select" id="campo-subcuenta">
+        <option value="">—</option>
+      </select>
+    </div>
+
+    <div class="form-group full">
+      <label class="form-label">Cuenta auxiliar / Detalle</label>
+      <select class="form-select" id="campo-auxiliar-sel"></select>
+    </div>
+
+    <div class="form-group full" style="position:relative">
+      <label class="form-label">Proveedor / Beneficiario</label>
+      <input type="text" class="form-input" id="campo-proveedor"
+      placeholder="Buscar por nombre o NIT..."
+      autocomplete="off">
+      <div id="proveedor-sugerencias" style="
+      position:absolute; top:100%; left:0; right:0;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:8px; z-index:50; display:none;
+      box-shadow:0 4px 16px rgba(0,0,0,0.08); max-height:200px;
+      overflow-y:auto; margin-top:4px;">
+      </div>
+      <input type="hidden" id="campo-proveedor-id">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">NIT / Documento</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="campo-nit"
+          placeholder="900.123.456-1" style="flex:1">
+        <button type="button" class="btn btn-ghost" id="btn-nuevo-proveedor"
+          style="white-space:nowrap;padding:10px 14px;font-size:12px">
+          + Nuevo
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">No. Recibo / Factura</label>
+      <input type="text" class="form-input" id="campo-recibo"
+        placeholder="FE 59404">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Valor</label>
+      <input type="text" class="form-input" id="campo-valor"
+        placeholder="$ 0">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Método de pago</label>
+      <select class="form-select" id="campo-metodo"></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Facturado a nombre de</label>
+      <input type="text" class="form-input" id="campo-facturado"
+        placeholder="Opcional">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-guardar">
+        Guardar movimiento
+      </button>
+      <button class="btn btn-ghost" id="btn-limpiar">Limpiar</button>
+    </div>
+
+  </div>
+</div>

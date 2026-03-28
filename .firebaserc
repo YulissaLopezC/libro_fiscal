@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "libro-fiscal-121c9"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
